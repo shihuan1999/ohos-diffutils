@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaVerse · 多语种沉浸式学习平台</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============ 顶栏导航 ============ -->
+<header class="topbar" id="topbar">
+  <div class="container nav-inner">
+    <a class="brand" data-route="home">
+      <span class="brand-logo">🌐</span>
+      <span class="brand-text">Lingua<span>Verse</span></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a data-route="home">首页</a>
+      <a data-route="courses">课程</a>
+      <a data-route="learn">学习中心</a>
+      <a data-route="community">社区</a>
+      <a data-route="achievements">成就</a>
+    </nav>
+    <div class="nav-user" id="navUser"></div>
+  </div>
+</header>
+
+<main class="container main-content" id="app"></main>
+
+<!-- ============ 认证弹窗 ============ -->
+<div class="modal-mask" id="authModal">
+  <div class="modal auth-modal">
+    <button class="modal-close" data-close-auth>✕</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="login">登录</button>
+      <button class="auth-tab" data-auth-tab="register">注册</button>
+    </div>
+    <div class="auth-form" id="authForm">
+      <div class="field">
+        <label>用户名</label>
+        <input type="text" id="authUser" placeholder="请输入用户名" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>密码</label>
+        <input type="password" id="authPass" placeholder="请输入密码" autocomplete="current-password" />
+      </div>
+      <div class="field" id="authPassConfirmField" style="display:none">
+        <label>确认密码</label>
+        <input type="password" id="authPass2" placeholder="再次输入密码" />
+      </div>
+      <div class="field" id="authNickField" style="display:none">
+        <label>昵称</label>
+        <input type="text" id="authNick" placeholder="选填" />
+      </div>
+      <p class="auth-error" id="authError"></p>
+      <button class="btn btn-primary btn-block" id="authSubmit">登录</button>
+      <p class="auth-hint">提示：数据保存在本地浏览器，可放心体验</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Toast ============ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============ 模板 ============ -->
+<!-- 首页仪表盘 -->
+<template id="tpl-home">
+  <section class="hero">
+    <div class="hero-text">
+      <h1>沉浸式多语种学习，<br/>开启你的<span class="grad">语言宇宙</span></h1>
+      <p>英语 · 日语 · 韩语 等主流语言，分级课程 + 互动训练 + 社区陪练，每天进步一点点。</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" data-action="continue">继续学习 →</button>
+        <button class="btn btn-ghost btn-lg" data-route="courses">浏览课程</button>
+      </div>
+    </div>
+    <div class="hero-stats" id="heroStats"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>继续学习</h2>
+      <a class="link" data-route="learn">全部 →</a>
+    </div>
+    <div class="grid grid-3" id="continueGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>为你推荐</h2>
+      <span class="muted">基于你的水平与进度</span>
+    </div>
+    <div class="grid grid-3" id="recommendGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>学习语言</h2>
+      <span class="muted">选择一门开始旅程</span>
+    </div>
+    <div class="lang-row" id="langRow"></div>
+  </section>
+</template>
+
+<!-- 课程页 -->
+<template id="tpl-courses">
+  <section class="section">
+    <div class="section-head">
+      <h2>全部课程</h2>
+      <div class="filter-bar" id="courseFilter"></div>
+    </div>
+    <div class="grid grid-3" id="courseGrid"></div>
+  </section>
+</template>
+
+<!-- 课程详情 -->
+<template id="tpl-course-detail">
+  <section class="course-detail" id="courseDetail"></section>
+</template>
+
+<!-- 学习中心 -->
+<template id="tpl-learn">
+  <section class="section">
+    <h2>学习中心</h2>
+    <p class="muted">选择一个互动模块开始训练</p>
+    <div class="grid grid-4" id="moduleGrid"></div>
+  </section>
+  <section class="section">
+    <div class="section-head"><h2>我的进度</h2></div>
+    <div id="myProgress"></div>
+  </section>
+</template>
+
+<!-- 社区 -->
+<template id="tpl-community">
+  <section class="section">
+    <div class="section-head">
+      <h2>语言社区</h2>
+      <button class="btn btn-primary btn-sm" id="newPostBtn">+ 发布动态</button>
+    </div>
+    <div class="community-layout">
+      <div class="feed" id="feed"></div>
+      <aside class="sidebar">
+        <div class="card">
+          <h3>活跃语言</h3>
+          <div id="langTags"></div>
+        </div>
+        <div class="card">
+          <h3>本周榜单</h3>
+          <ol id="leaderboard"></ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+</template>
+
+<!-- 成就 -->
+<template id="tpl-achievements">
+  <section class="section">
+    <h2>我的成就</h2>
+    <div class="ach-summary" id="achSummary"></div>
+    <div class="grid grid-4" id="achGrid"></div>
+  </section>
+</template>
+
+<script src="js/data.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/modules.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
