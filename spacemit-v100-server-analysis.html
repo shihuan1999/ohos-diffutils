@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>进迭时空 V100 深度分析与服务器芯片对比</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --ink:#e8eaf0; --sub:#a7aebc;
+    --line:#2a2f3a; --accent:#4ea1ff; --accent2:#37d39a; --warn:#ffb454; --bad:#ff6b6b;
+    --good:#37d39a; --mid:#ffb454; --low:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0d0f13,#0f1115 240px);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 22px 90px}
+  header.top{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:34px}
+  .kicker{color:var(--accent);font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  h1{font-size:31px;line-height:1.28;margin:12px 0 10px;font-weight:750;letter-spacing:-.01em}
+  .meta{color:var(--sub);font-size:13.5px}
+  h2{font-size:22px;margin:46px 0 14px;padding-left:13px;border-left:4px solid var(--accent);font-weight:700;letter-spacing:-.01em}
+  h3{font-size:17px;margin:26px 0 8px;color:#dfe3ec;font-weight:650}
+  p{margin:10px 0}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ul,ol{margin:10px 0;padding-left:24px}
+  li{margin:6px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:18px 0}
+  .verdict{background:linear-gradient(135deg,rgba(78,161,255,.12),rgba(55,211,154,.08));border:1px solid #2f3d55}
+  .verdict h2{border-left-color:var(--accent2)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.6px;overflow:hidden;border-radius:10px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cfd6e4;font-weight:650}
+  tbody tr:nth-child(odd){background:rgba(255,255,255,.015)}
+  td.hl{color:#fff;font-weight:600}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--sub);margin-left:6px;vertical-align:middle}
+  .t-ok{color:var(--good);border-color:rgba(55,211,154,.4)}
+  .t-mid{color:var(--mid);border-color:rgba(255,180,84,.4)}
+  .t-low{color:var(--low);border-color:rgba(255,107,107,.4)}
+  .t-dis{color:var(--warn);border-color:rgba(255,180,84,.4)}
+  .bar{height:8px;border-radius:6px;background:#232833;overflow:hidden;min-width:70px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#4ea1ff,#37d39a)}
+  .note{font-size:13px;color:var(--sub);border-left:3px solid var(--warn);padding:8px 14px;background:rgba(255,180,84,.06);border-radius:0 8px 8px 0;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .kv{font-size:13.6px}
+  .kv b{color:#fff}
+  .src{font-size:12.6px;color:var(--sub);line-height:1.7}
+  .src li{margin:4px 0}
+  code{background:#20242e;padding:1px 6px;border-radius:5px;font-size:13px;color:#c7d0e0}
+  .pill{display:inline-block;background:#20242e;border:1px solid var(--line);border-radius:8px;padding:3px 10px;font-size:12.5px;margin:3px 6px 3px 0;color:#c8d0de}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+  .small{font-size:13px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">RISC-V Server Silicon · Competitive Analysis</div>
+  <h1>进迭时空 V100 深度分析：<br>RISC-V 服务器芯片第一梯队的“落地派”</h1>
+  <div class="meta">数据截止：2026-10-19（Asia/Shanghai） ｜ 分析框架：多维度横向对比 + 跨架构对比 + 竞争定位 ｜ 编制：竞品与产业研究</div>
+</header>
+
+<div class="card verdict">
+  <h2 style="margin-top:0">结论速览（先给答案）</h2>
+  <p><b>V100 是什么：</b>进迭时空（SpacemiT）推出的首款面向服务器市场的 RISC-V 芯片，属 V 系列旗舰，基于中科院“香山·昆明湖”开源处理器核，实测 SPEC CPU2006 约 <b>16.5 分/GHz</b>，以 <b>2U 整机</b>形态完成工程化落地。它最大的意义不是“跑分之王”，而是把 RISC-V 从“PPT 性能/低端 IoT”推进到“可交付的服务器整机”。</p>
+  <p><b>我的判断（分层）：</b></p>
+  <ul>
+    <li><b>就“RISC-V 阵营内部”而言，我更看好 V100。</b>理由是它比同代竞品更早越过“能用”到“可交付”的门槛——已流片、已有 2U 整机、已有香山开源生态背书和中国大陆供应链托底。</li>
+    <li><b>就“通用服务器/云计算主战场”而言，1–2 年内我更看好 ARM（尤其国产 ARM 鲲鹏/飞腾 + 云厂商 Graviton 类）与 x86。</b>生态成熟度、软件兼容性、TCO 仍有明显代差；V100 当前更适合“边缘/信创/特定 AI 推理”场景，而非直接替换 EPYC/Xeon。</li>
+    <li><b>就“纯性能天花板”而言，RISC-V 阵营里我更看好 Tenstorrent Ascalon、SiFive P870-D、Ventana Veyron V2 这类高端 IP。</b>V100 的 16.5 分/GHz 已属 RISC-V 第一梯队，但单核绝对性能仍落后这几家。</li>
+  </ul>
+  <p class="small">注：不同基准（SPEC2006 / SPEC2017 / 不同编译参数）不可直接横比，本文仅在明确口径下比较，详见方法与免责说明。</p>
+</div>
+
+<h2>1. V100 是什么：发布背景与规格</h2>
+
+<h3>1.1 发布背景</h3>
+<p>“第六届 RISC-V 中国峰会（RISC-V Summit China 2026）”于 <b>2026 年 10 月 18–20 日</b>在深圳会展中心（福田）举行，大会主论坛定于 <b>10 月 19 日</b>，进迭时空创始人兼 CEO 陈志坚发表主题演讲《从端到云：RISC-V 的下一程》。<span class="tag">[cite:1]</span><span class="tag">[cite:2]</span> 这一时间点与您提到的“今天发布”吻合。</p>
+<p>需要说明的是：<b>V100 并非“横空出世”。</b>公开时间线显示它已酝酿一年以上：</p>
+<ul class="kv">
+  <li><b>2025-01</b>：进迭时空对外披露正在研发服务器级 RISC-V 芯片 V100，基于自研 X100 核，支持虚拟化、IOMMU 与安全特性，SPECINT2006 超过 9 分/GHz。<span class="tag">[cite:3]</span></li>
+  <li><b>2025-07</b>：RISC-V 中国峰会期间，产业链消息称 V100（64 核）目标当年 Q4 量产；同期开芯院宣布“昆明湖”IP 首批量产客户交付，进迭时空基于“昆明湖”自研 X200，并推进首款服务器芯片（集成“昆明湖”核）流片。<span class="tag">[cite:4]</span><span class="tag">[cite:5]</span></li>
+  <li><b>2026-01</b>：有报道称 V100 已在 1 月“发布/亮相”，并给出 64 核、2.5GHz、约 32 TOPS(INT8) 等口径（<span class="tag t-dis">第三方媒体，待官方口径确认</span>）。<span class="tag">[cite:6]</span></li>
+  <li><b>2026-03</b>：中关村论坛上，“香山+如意”发布，现场展出 V100 服务器，香山方称 V100 基于“昆明湖”核设计并流片，实测单核 SPEC2006 <b>16.5 分/GHz</b>。<span class="tag">[cite:7]</span></li>
+  <li><b>2026-08</b>：进迭时空在公开演讲中表示“V100 已流片回来，将择机正式发布；V200 在研发中”。<span class="tag">[cite:8]</span></li>
+</ul>
+<div class="note"><b>核实提示：</b>截至本报告数据截止日，未见可交叉验证的“V100 于 10 月 19 日正式发布”的官方通稿被检索到（峰会主论坛当日进行中，内容可能尚未被索引）。上文规格为公开披露口径，最终以进迭时空官方发布为准；其中“64 核”等参数目前主要来自第三方媒体，存在待确认空间。</div>
+
+<h3>1.2 关键规格与定位（公开口径）</h3>
+<table>
+  <thead><tr><th style="width:26%">维度</th><th>公开口径</th><th style="width:22%">来源可信度</th></tr></thead>
+  <tbody>
+    <tr><td class="hl">产品定位</td><td>进迭时空首款<b>服务器级</b> RISC-V 处理器（V 系列旗舰），面向云计算、数据中心/边缘 AI 推理</td><td>高（多源一致）</td></tr>
+    <tr><td class="hl">处理器核</td><td><b>香山·昆明湖</b>（开源，中科院计算所牵头）；<span class="tag t-dis">另有早期口径为自研 X100 核</span></td><td>中（口径存在冲突，见 1.3）</td></tr>
+    <tr><td class="hl">指令集标准</td><td>符合 <b>RVA23 Profile</b>，支持完整虚拟化（Hypervisor 1.0、AIA、IOMMU）、RVV 1.0</td><td>高</td></tr>
+    <tr><td class="hl">单核性能</td><td><b>SPEC CPU2006 约 16.5 分/GHz</b>（芯片实测）；昆明湖发布时为 15 分/GHz，优化后可达 ~18.5</td><td>高（官方/权威媒体）</td></tr>
+    <tr><td class="hl">核心数 / 形态</td><td>媒体报道 64 核；已以 <b>2U 整机</b>服务器形态落地</td><td>中（核心数为第三方）</td></tr>
+    <tr><td class="hl">AI 能力</td><td>媒体口径约 <b>32 TOPS(INT8)</b>（64 核整体），走 CPU+向量/矩阵“融合”路线而非独立 NPU</td><td>低-中（<span class="tag t-dis">待确认</span>）</td></tr>
+    <tr><td class="hl">生态适配</td><td>可跑 Linux 与虚拟机；同厂 K3 已是全球首个原生适配 Ubuntu 26.04 LTS 的 RISC-V 平台</td><td>中-高</td></tr>
+  </tbody>
+</table>
+<p class="small">表注：<span class="tag t-dis">待确认</span> 表示仅单一/第三方来源；本报告凡未给出 <span class="tag">[cite]</span> 的数量均为公开口径复述，建议以官方发布为准。</p>
+
+<h3>1.3 一处重要的口径冲突（必须说明）</h3>
+<p>关于 V100 的 CPU 核来源，公开信息存在两条链路：</p>
+<ul>
+  <li><b>链路 A（早期，2025）</b>：V100 使用进迭时空自研 <b>X100</b> 核——X100 基于开源项目 openc910 二次开发，12 级流水线、乱序四发射、RVA23、支持 64 核互联、2.5GHz@TSMC 12nm、SPEC2006 &gt;9 分/GHz。<span class="tag">[cite:3]</span><span class="tag">[cite:9]</span></li>
+  <li><b>链路 B（2026，更晚更权威）</b>：V100 基于中科院 <b>香山·昆明湖</b>开源核（对标 ARM Neoverse N2），由合作伙伴进迭时空设计并流片，实测 16.5 分/GHz。<span class="tag">[cite:7]</span><span class="tag">[cite:10]</span></li>
+</ul>
+<p>两条链路并非完全互斥——可能是“早期规划用 X100、后期旗舰改用/融合昆明湖”的演进。本报告以 <b>链路 B（香山·昆明湖）</b> 为分析基线，因为它是更晚、更权威（中科院/香山官方/人民网/中国科学报）且被多方一致引用的口径。</p>
+
+<h3>1.4 V100 的战略含义</h3>
+<div class="grid">
+  <div class="card" style="margin:0">
+    <p class="kv"><b>它不是一次孤立的芯片发布，而是三件事汇合：</b></p>
+    <ul class="kv">
+      <li><b>开源 IP 成熟</b>：香山“昆明湖”完成产品级验证（近 100% 覆盖率）并交付量产客户，开源高性能核首次真正进入商业芯片。<span class="tag">[cite:7]</span></li>
+      <li><b>RVA23 落地</b>：RVA23 成为 64 位应用处理器的统一基线，Ubuntu 26.04 LTS（2026-04）是首个 RVA23 LTS，软硬件基线第一次对齐。<span class="tag">[cite:11]</span></li>
+      <li><b>服务器平台标准化</b>：RISC-V Server Platform Specification v1.0 于 2026 年批准，补齐了启动/发现/中断/虚拟化等服务器“公共能力”。<span class="tag">[cite:12]</span></li>
+    </ul>
+  </div>
+  <div class="card" style="margin:0">
+    <p class="kv"><b>目标客户与场景（推断，中等置信度）：</b></p>
+    <ul class="kv">
+      <li>国内信创/自主可控替换试点（党政、运营商、能源等）</li>
+      <li>边缘与分布式 AI 推理节点（低功耗、高能效诉求）</li>
+      <li>云原生轻量负载、数据库（已见 YashanDB 等国产数据库在峰会站台）</li>
+      <li>与香山营企业（蓝芯算力、奕斯伟等）形成国产 RISC-V 服务器集群生态</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2. RISC-V 服务器级芯片横向对比</h2>
+<p>以下选取 2026 年最具代表性、面向服务器/数据中心的高性能 RISC-V 芯片或 IP，与 V100 同维度对比。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>产品（厂商）</th><th>核/架构</th><th>单核性能（口径）</th><th>频率/工艺</th><th>形态/状态</th><th>关键特征</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="hl">V100（进迭时空）</td>
+      <td>香山·昆明湖（开源核）</td>
+      <td><b>≈16.5 分/GHz</b>（SPEC2006，芯片实测）</td>
+      <td>—（整机形态）</td>
+      <td>2U 整机，已流片/工程落地</td>
+      <td>RVA23、完整虚拟化、IOMMU、CPU+AI 融合</td>
+    </tr>
+    <tr>
+      <td class="hl">香山·昆明湖（开芯院 IP）</td>
+      <td>自研 OoO 大核</td>
+      <td>15 分/GHz（发布）→ 16.5（实测）；V3 目标 22 分/GHz</td>
+      <td>—</td>
+      <td>IP，已量产客户交付</td>
+      <td>对标 ARM N2、RVA23、开源、机密虚拟机规划</td>
+    </tr>
+    <tr>
+      <td class="hl">玄铁 C930（阿里达摩院）</td>
+      <td>自研 6 译码 OoO</td>
+      <td>SPECint2006 约 15 分/GHz（官方另有 &gt;17 口径）</td>
+      <td>&gt;3.4 GHz</td>
+      <td>IP，2025-03 起交付</td>
+      <td>512-bit RVV1.0 + 8 TOPS Matrix 双引擎、RVA23</td>
+    </tr>
+    <tr>
+      <td class="hl">Veyron V2（Ventana / 已被高通收购）</td>
+      <td>自研数据中心核，32 核 chiplet</td>
+      <td>8.4 SPECint2017（rate=1，非 2006）</td>
+      <td>3.85 GHz / N3</td>
+      <td>IP/平台</td>
+      <td>128MB L3、512-bit RVV、UCIe、RVA23；2025-12 被高通收购</td>
+    </tr>
+    <tr>
+      <td class="hl">P870-D / BigSky SF-2U870（SiFive）</td>
+      <td>6 宽度 OoO，32 核簇</td>
+      <td>较上代 +50%（SPECint2k6，单线程峰值）</td>
+      <td>2.0 GHz / TSMC N6（既有平台）</td>
+      <td>商用 2U 开发平台</td>
+      <td>256GB DDR5-5600、4×PCIe Gen5 x16、RVA23、对接 AMD ROCm</td>
+    </tr>
+    <tr>
+      <td class="hl">Ascalon（Tenstorrent）</td>
+      <td>自研 OoO 超标量，256-bit 向量</td>
+      <td><b>&gt;22 分/GHz</b>（SPECint2006）；&gt;2.3 SPECint2017/GHz</td>
+      <td>&gt;2.5 GHz / Samsung SF4X</td>
+      <td>IP</td>
+      <td>RVA23、面向 AI/汽车/基础设施；另有 Ascalon S 小面积版</td>
+    </tr>
+  </tbody>
+</table>
+<p class="small">数据来源：<span class="tag">[cite:7]</span><span class="tag">[cite:8]</span><span class="tag">[cite:13]</span><span class="tag">[cite:14]</span><span class="tag">[cite:15]</span><span class="tag">[cite:16]</span><span class="tag">[cite:17]</span><span class="tag">[cite:18]</span>。不同基准/编译口径不可直接横比；SPEC2006 与 SPEC2017 分数不可换算。</p>
+
+<h3>2.1 逐项解读</h3>
+<ul>
+  <li><b>性能维度：</b>V100（16.5/GHz，SPEC2006）已进入 RISC-V 第一梯队，与达摩院 C930（~15–17）同档，<b>但落后 Tenstorrent Ascalon（&gt;22）</b>。<span class="tag">[cite:7]</span><span class="tag">[cite:13]</span><span class="tag">[cite:17]</span></li>
+  <li><b>落地维度：</b>V100、SiFive BigSky、昆明湖 IP 均已“有实物/整机”；Ventana/C930 多为 IP 交付。<b>V100 的差异化在于“整机 + 中国供应链”</b>。<span class="tag">[cite:7]</span><span class="tag">[cite:15]</span></li>
+  <li><b>AI 维度：</b>C930（8 TOPS Matrix）与 Ascalon（向量+AI 定位）更强调矩阵/向量；V100 走“CPU 内融合 AI 指令”，功耗友好但绝对算力较低。</li>
+  <li><b>生态/资本维度：</b>Ventana 被高通收购后，RISC-V 服务器赛道获得巨头背书；SiFive 联合 AMD ROCm，补齐 AI 软件栈；香山系的优势则是“开源 + 本土产业联盟”。</li>
+</ul>
+
+<h2>3. 跨架构对比：RISC-V vs ARM vs x86</h2>
+<p>把 V100 放进更大的服务器 CPU 版图，与两条成熟架构的主力对比。</p>
+
+<table>
+  <thead>
+    <tr><th>维度</th><th>V100 / RISC-V</th><th>ARM 服务器</th><th>x86 服务器</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="hl">代表产品</td>
+      <td>V100、香山、C930、Ascalon、Veyron V2、P870-D</td>
+      <td>NVIDIA Grace（Neoverse V2）、华为鲲鹏 920（国产 ARM）、Ampere、AWS Graviton</td>
+      <td>AMD EPYC 9005 Turin / 6th Gen Venice、Intel Xeon 6（Granite Rapids）</td>
+    </tr>
+    <tr>
+      <td class="hl">成熟度/性能规模</td>
+      <td>64 核量级；单核约 16.5/GHz（SPEC2006），<b>第一梯队但非绝对领先</b></td>
+      <td>Grace 72/144 核、1TB/s 内存带宽；鲲鹏 920 最高 64 核 @2.6GHz</td>
+      <td>Xeon 6 单路 8–86 P 核、DDR5-6400/MRDIMM 8800MT/s；EPYC 最多 192 Zen5 核，Venice(Zen6) 达 256 核、1.6TB/s</td>
+    </tr>
+    <tr>
+      <td class="hl">软件生态</td>
+      <td><span class="tag t-mid">追赶中</span> RVA23 + Ubuntu 26.04 LTS + Server Platform v1.0，主流发行版/数据库逐步就位</td>
+      <td><span class="tag t-ok">成熟</span> Linux 主线、云原生、主流数据库/AI 框架全支持，云厂商大规模商用</td>
+      <td><span class="tag t-ok">最成熟</span> 数十年积累，ISV/工具链/虚拟化/安全体系最完备</td>
+    </tr>
+    <tr>
+      <td class="hl">TCO / 单位算力成本</td>
+      <td>初期成本优势来自“无 IP 授权费 + 开源 + 本土供应链”，但规模化与软件调优成本高</td>
+      <td>云场景能效/性价比已被 Graviton、Ampere 验证</td>
+      <td>规模化最划算，但采购单价与授权、生态锁定成本高</td>
+    </tr>
+    <tr>
+      <td class="hl">供给/地缘</td>
+      <td><span class="tag t-ok">强</span> 开源、无授权锁定；大陆供应链可自主（缓解出口管制风险）</td>
+      <td>国产 ARM（鲲鹏/飞腾）同样可自主；海外 ARM 受授权与管制影响</td>
+      <td>x86 高端受出口管制与授权限制，国产替代是主要驱动力</td>
+    </tr>
+    <tr>
+      <td class="hl">主战场适配</td>
+      <td>边缘/信创/特定 AI 推理；通用云计算仍处“试点”阶段</td>
+      <td>云通用计算、HPC、AI 主机（Grace-Blackwell）</td>
+      <td>数据库、虚拟化、企业应用、AI 训练/推理全栈</td>
+    </tr>
+  </tbody>
+</table>
+<p class="small">数据来源：<span class="tag">[cite:11]</span><span class="tag">[cite:12]</span><span class="tag">[cite:19]</span><span class="tag">[cite:20]</span><span class="tag">[cite:21]</span><span class="tag">[cite:22]</span><span class="tag">[cite:23]</span>。</p>
+
+<h3>3.1 一句话概括三条路线</h3>
+<ul>
+  <li><b>x86：</b>生态与性能天花板最高，但“不可自主 + 价高”，正被国产化需求把份额往外挤。</li>
+  <li><b>ARM：</b>能效/性价比的“甜蜜点”，云端已被大规模验证，是 x86 之外最现实的主流选择。</li>
+  <li><b>RISC-V：</b>“开源 + 可定制 + 供应链自主”的长期主义，2026 年刚跨过“服务器可用”门槛，V100 是这一跨越的标志性产物。</li>
+</ul>
+
+<h2>4. 竞争定位：V100 处在什么位置</h2>
+<div class="grid">
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">SWOT（V100 / 进迭时空）</h3>
+    <table style="font-size:13px;margin:8px 0">
+      <tr><th>优势 S</th><td style="border:1px solid var(--line)">已流片 + 2U 整机落地；背靠香山开源生态；RVA23/虚拟化/IOMMU 齐备；大陆供应链自主</td></tr>
+      <tr><th>劣势 W</th><td style="border:1px solid var(--line)">单核绝对性能落后 x86/ARM 旗舰与 Ascalon；工具链/AI 栈调优不足；规模化软件适配成本高</td></tr>
+      <tr><th>机会 O</th><td style="border:1px solid var(--line)">信创替换、边缘 AI、国产数据库与云原生；Server Platform v1.0 + Ubuntu 26.04 打开通用化窗口</td></tr>
+      <tr><th>威胁 T</th><td style="border:1px solid var(--line)">甲方对“能否替代 x86”的疑虑；同门竞争（C930、Ascalon、Veyron V2）；ARM 性价比持续下探</td></tr>
+    </table>
+  </div>
+  <div class="card" style="margin:0">
+    <h3 style="margin-top:0">定位 2×2（性能 × 生态成熟度）</h3>
+    <table style="font-size:13px;margin:8px 0">
+      <tr><th>象限</th><th>代表</th></tr>
+      <tr><td>高性能 + 成熟生态</td><td>Intel Xeon 6、AMD EPYC（Venice/Turin）</td></tr>
+      <tr><td>高性能 + 成长生态</td><td>NVIDIA Grace、鲲鹏、Graviton；RISC-V 中的 Ascalon / P870-D / Veyron V2（IP）</td></tr>
+      <tr><td>够用性能 + 可用生态</td><td><b>V100、香山昆明湖、C930</b>（正在突破这一象限的上边界）</td></tr>
+      <tr><td>低性能 + 边缘场景</td><td>嵌入式 RISC-V/ARM</td></tr>
+    </table>
+    <p class="small">V100 的价值不是“登顶高性能象限”，而是<b>把 RISC-V 从右下角推进到“够用 + 可用”象限，并把整机做出来</b>。</p>
+  </div>
+</div>
+
+<h2>5. 我的判断：更看好谁</h2>
+<div class="card verdict">
+  <p><b>问题分三层，答案也分三层（避免一句“站队”掩盖真实差异）：</b></p>
+  <ol>
+    <li><b>如果只谈“RISC-V 服务器芯片里谁最有戏落地”——我更看好 V100。</b><br>
+      理由：它比多数对手更早拿到“工程化闭环”——流片、2U 整机、开源生态、国产供应链、真实客户场景试点。对产业客户来说，“能买到、能装上、跑得起”往往比“跑分高 5 分”更重要。这也是进迭时空从 K1/K3（端侧）切到服务器（V100）的关键一跃。</li>
+    <li><b>如果谈“通用服务器/云主战场站谁”——1–2 年内我更看好 ARM，其次是 x86。</b><br>
+      RISC-V 的优势是“开源自主”，短板是“生态与调优”。企业换架构的成本极高，V100 更适合“增量场景”（信创、边缘、AI 推理、轻量云）而非“存量替换”。ARM（尤其国产鲲鹏/飞腾）在“能效 + 性价比 + 生态”的平衡上，仍是当下最现实的选择。</li>
+    <li><b>如果谈“RISC-V 的长期性能天花板”——我更看好 Ascalon、P870-D、Veyron V2 这类高端 IP，以及“香山”IP 的持续迭代。</b><br>
+      V100 是“落地派”的代表，Ascalon/SiFive 是“性能派”的代表。V100 的 16.5/GHz 已属第一梯队，但要追上 x86/ARM 与顶尖 RISC-V 核的单核绝对性能，仍需依赖下一次核迭代（香山 V3 目标 22 分/GHz）。<span class="tag">[cite:13]</span></li>
+  </ol>
+  <p><b>最终一句话：</b>“<b>短期看 ARM/x86，RISC-V 里短期看 V100 的落地、长期看香山与 Ascalon/SiFive 的天花板</b>。” V100 是一次“把开源 RISC-V 真正变成服务器产品”的里程碑，值得看好；但把它当成“今天就替代 EPYC/Xeon”的答案，会高估它当下的成熟度。</p>
+</div>
+
+<h2>6. 风险与后续观察指标</h2>
+<table>
+  <thead><tr><th>观察项</th><th>为什么重要</th><th>升级/降级信号</th></tr></thead>
+  <tbody>
+    <tr><td>官方定稿规格</td><td>核数、频率、内存/Pcle 通道、TDP 尚未有官方通稿</td><td>出现官方 datasheet → 上调置信度</td></tr>
+    <tr><td>第三方 SPEC/真实负载跑分</td><td>区分“峰值得分”与“持续负载/能效”</td><td>有独立测评 → 可信度大增</td></tr>
+    <tr><td>软件栈成熟度</td><td>KVM/容器/数据库/主流 AI 框架的原生支持</td><td>发行版与 ISV 官方认证 → 通用化提速</td></tr>
+    <tr><td>量产与交付节奏</td><td>从小批量试点到规模化供货</td><td>公布产能/客户名单 → 兑现落地</td></tr>
+    <tr><td>同门竞争（C930/Ascalon/SiFive）</td><td>决定 V100 的相对位次</td><td>对手先规模交付 → 竞争加剧</td></tr>
+    <tr><td>国产 ARM 的性价比</td><td>信创市场里最直接对手</td><td>鲲鹏/飞腾放量降价 → 挤压 RISC-V 份额</td></tr>
+  </tbody>
+</table>
+
+<hr>
+<h2>7. 方法与免责说明</h2>
+<ul class="small">
+  <li>本报告基于公开可检索信息编制，数据截止 2026-10-19；速变信息请在 6 个月后复核。</li>
+  <li>不同厂商、不同年份的 SPEC 分数（SPEC2006 vs SPEC2017、编译器/主频口径）<b>不可直接横比</b>，本文已在表中标注口径。</li>
+  <li>凡未标 <span class="tag">[cite]</span> 的数值均为公开口径复述；标 <span class="tag t-dis">待确认</span> 者为单一/第三方来源。合成或推测数据未使用。</li>
+  <li>“更看好谁”为基于当前公开信息与产业逻辑的分析判断，非投资建议。</li>
+</ul>
+
+<h2>Sources</h2>
+<ol class="src">
+  <li>[cite:1] 第六届 RISC-V 中国峰会 会议议程（21 世纪经济报道直播页）— <a href="https://m.21jingji.com/live/show/5721.html">https://m.21jingji.com/live/show/5721.html</a></li>
+  <li>[cite:2] RISC-V Summit China 2026 官网 — <a href="https://riscv-summit-china.org/">https://riscv-summit-china.org/</a></li>
+  <li>[cite:3] SpacemiT Develops Server CPU Chip V100 for Next-Gen AI Applications（RISC-V International）— <a href="https://riscv.org/ecosystem-news/2025/01/spacemit-develops-server-cpu-chip-v100-for-next-gen-ai-applications/">riscv.org</a></li>
+  <li>[cite:4] RISC-V Summit China 2025 Reflections — <a href="https://riscv.org/blog/2025/07/risc-v-summit-china-2025-reflections-from-a-risc-v-software-contributor/">riscv.org</a></li>
+  <li>[cite:5] 国产第三代“香山”(昆明湖)RISC-V 处理器核实现首批交付（物联网世界）— <a href="https://mobile.iotworld.com.cn/View.aspx/News-d9c82ce5f516ce69">iotworld.com.cn</a></li>
+  <li>[cite:6] RISC-V Reaches Server Maturity: SpacemiT Unveils 64-Core Vital Stone V100 — <a href="https://www.lodinews.marketminute.com/article/tokenring-2026-1-26-risc-v-reaches-server-maturity-spacemit-unveils-64-core-vital-stone-v100-with-30-efficiency-gain-over-arm">marketminute.com</a></li>
+  <li>[cite:7] 开源高性能双轮驱动，“香山”筑牢全球开源开放全栈底座（北京开源芯片研究院）— <a href="https://www.bosc.ac.cn/newsinfo/11238673.html">bosc.ac.cn</a>；另见 XiangShan Biweekly 99 — <a href="https://docs.xiangshan.cc/zh-cn/latest/blog/2026/03/30/biweekly-99-en/">docs.xiangshan.cc</a></li>
+  <li>[cite:8] 进迭时空 K3 卡位 RISC-V 端侧 AI（V100 已流片、择机发布）— <a href="https://www.eet-china.com/news/202608139657.html">eet-china.com</a></li>
+  <li>[cite:9] SpacemiT X100 Core 产品页 — <a href="https://www.spacemit.com/products/ai-compute-core/x100">spacemit.com</a></li>
+  <li>[cite:10] 中国科学院正式发布 RISC-V 生态建设重要成果（人民网）— <a href="http://finance.people.com.cn/n1/2026/0328/c1004-40690656.html">people.com.cn</a></li>
+  <li>[cite:11] Full-Fat, Kernel-Ready: RISC-V Linux 与 RVA23 / Ubuntu 26.04 — <a href="https://riscv.org/blog/risc-v-upstreaming/">riscv.org</a></li>
+  <li>[cite:12] The State of the RISC-V Linux Ecosystem in 2026（Server Platform Spec v1.0）— <a href="https://icstutorial.com/the-state-of-the-risc-v-linux-ecosystem-in-2026/">icstutorial.com</a></li>
+  <li>[cite:13] 包云岗：RISC-V 生态突破需跨越四道坎（昆明湖 15/GHz，优化 18.5，V3 目标 22）— <a href="https://www.eet-china.com/news/202507173968.html">eet-china.com</a></li>
+  <li>[cite:14] 达摩院玄铁 C930：SPECint2006 15/GHz、512bit RVV、8 TOPS Matrix（新华网）— <a href="https://www.news.cn/tech/20250228/f4fd7f4a23744e4f9763ed156429cd6c/c.html">news.cn</a>；玄铁官方事实页 — <a href="https://www.xrvm.cn/about/xuantie-facts">xrvm.cn</a></li>
+  <li>[cite:15] Ventana Veyron V2（RISC-V Summit Europe 2025 slides）— <a href="https://riscv-europe.org/summit/2025/media/proceedings/2025-05-13-RISC-V-Summit-Europe-09h40-BAKTHA-slides.pdf">riscv-europe.org</a></li>
+  <li>[cite:16] Qualcomm Acquires Ventana Micro Systems — <a href="https://www.qualcomm.com/news/releases/2025/12/qualcomm-acquires-ventana-micro-systems--deepening-risc-v-cpu-ex">qualcomm.com</a></li>
+  <li>[cite:17] Tenstorrent Announces Availability of TT-Ascalon — <a href="https://tenstorrent.com/vision/tenstorrent-announces-availability-of-tt-ascalon">tenstorrent.com</a></li>
+  <li>[cite:18] SiFive BigSky SF-2U870 Datacenter Development Platform — <a href="https://www.sifive.com/development-platforms/sifive-bigsky-sf-2u870-datacenter">sifive.com</a>；SiFive 与 AMD ROCm 合作 — <a href="https://www.sifive.cn/press/sifive-amd-rocm-riscv-datacenter-servers">sifive.cn</a></li>
+  <li>[cite:19] NVIDIA Grace CPU Superchip Datasheet — <a href="https://www.nvidia.com/en-eu/data-center/grace-cpu-superchip/">nvidia.com</a></li>
+  <li>[cite:20] 鲲鹏 920 处理器规格（鲲鹏社区）— <a href="https://www.hikunpeng.com/compute/kunpeng920">hikunpeng.com</a></li>
+  <li>[cite:21] Intel 至强 6 处理器家族（Granite Rapids，8–86 P 核，DDR5-6400/MRDIMM）— <a href="https://www.intel.cn/content/www/cn/zh/artificial-intelligence/new-xeon-6-products-cure-choice-difficulties.html">intel.cn</a></li>
+  <li>[cite:22] AMD Advancing AI 2026（EPYC Venice，Zen 6）— <a href="https://www.amd.com/content/dam/amd/en/documents/corporate/events/advancing-ai-2026-distribution-deck.pdf">amd.com</a></li>
+  <li>[cite:23] AMD | Intel 服务器芯片 2026 综述（36 氪）— <a href="https://m.36kr.com/p/3908771208778885">36kr.com</a></li>
+</ol>
+
+</div>
+</body>
+</html>
