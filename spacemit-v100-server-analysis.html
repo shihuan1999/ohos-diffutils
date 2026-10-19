@@ -68,7 +68,7 @@
   <p><b>V100 是什么：</b>进迭时空（SpacemiT）推出的首款面向服务器市场的 RISC-V 芯片，属 V 系列旗舰，基于中科院“香山·昆明湖”开源处理器核，实测 SPEC CPU2006 约 <b>16.5 分/GHz</b>，以 <b>2U 整机</b>形态完成工程化落地。它最大的意义不是“跑分之王”，而是把 RISC-V 从“PPT 性能/低端 IoT”推进到“可交付的服务器整机”。</p>
   <p><b>我的判断（分层）：</b></p>
   <ul>
-    <li><b>就“RISC-V 阵营内部”而言，我更看好 V100。</b>理由是它比同代竞品更早越过“能用”到“可交付”的门槛——已流片、已有 2U 整机、已有香山开源生态背书和中国大陆供应链托底。</li>
+    <li><b>就“RISC-V 阵营内部”而言，我最看好的是“香山系”的落地，而 V100 是其中通用算力侧的代表。</b>需要先纠正一个常见误读：<b>V100 并非首个量产的 RISC-V 服务器 CPU</b>——蓝芯算力 LX500（同样基于香山·昆明湖）已随联想问天 WR5219 G5 先行量产。V100 的优势在“通用算力密度 + 端云全栈 + 自研 IP 广度”，而非量产领先。</li>
     <li><b>就“通用服务器/云计算主战场”而言，1–2 年内我更看好 ARM（尤其国产 ARM 鲲鹏/飞腾 + 云厂商 Graviton 类）与 x86。</b>生态成熟度、软件兼容性、TCO 仍有明显代差；V100 当前更适合“边缘/信创/特定 AI 推理”场景，而非直接替换 EPYC/Xeon。</li>
     <li><b>就“纯性能天花板”而言，RISC-V 阵营里我更看好 Tenstorrent Ascalon、SiFive P870-D、Ventana Veyron V2 这类高端 IP。</b>V100 的 16.5 分/GHz 已属 RISC-V 第一梯队，但单核绝对性能仍落后这几家。</li>
   </ul>
@@ -134,7 +134,7 @@
 </div>
 
 <h2>2. RISC-V 服务器级芯片横向对比</h2>
-<p>以下选取 2026 年最具代表性、面向服务器/数据中心的高性能 RISC-V 芯片或 IP，与 V100 同维度对比。</p>
+<p>以下选取 2026 年最具代表性、面向服务器/数据中心的高性能 RISC-V 芯片或 IP，与 V100 同维度对比。<b>其中蓝芯算力 LX500 是必须纳入的直接竞品</b>——它与 V100 同源于“香山·昆明湖”，且已先行量产。</p>
 
 <table>
   <thead>
@@ -150,6 +150,14 @@
       <td>—（整机形态）</td>
       <td>2U 整机，已流片/工程落地</td>
       <td>RVA23、完整虚拟化、IOMMU、CPU+AI 融合</td>
+    </tr>
+    <tr style="background:rgba(55,211,154,.08)">
+      <td class="hl">LX500（蓝芯算力）<span class="tag t-ok">已量产</span></td>
+      <td>香山·昆明湖 V2 定制，48 核异构（32 P 核 + 16 E 核）</td>
+      <td>单核与昆明湖同源（未公开独立 SPEC 口径）</td>
+      <td>PCIe 5.0 / DDR5 / CXL 2.0</td>
+      <td><b>整机已量产</b>：联想问天 WR5219 G5，2026-07 下线</td>
+      <td>RISC-V+AI 片上融合、INT8 峰值 75 TOPS、RVA23、RVV 1.0</td>
     </tr>
     <tr>
       <td class="hl">香山·昆明湖（开芯院 IP）</td>
@@ -202,6 +210,45 @@
   <li><b>AI 维度：</b>C930（8 TOPS Matrix）与 Ascalon（向量+AI 定位）更强调矩阵/向量；V100 走“CPU 内融合 AI 指令”，功耗友好但绝对算力较低。</li>
   <li><b>生态/资本维度：</b>Ventana 被高通收购后，RISC-V 服务器赛道获得巨头背书；SiFive 联合 AMD ROCm，补齐 AI 软件栈；香山系的优势则是“开源 + 本土产业联盟”。</li>
 </ul>
+
+<h3>2.2 量产进度：谁真的把 RISC-V 服务器做出来了？</h3>
+<p>这是上一版报告最需要更正的地方：<b>V100 并不是首个进入量产的 RISC-V 服务器 CPU。</b>蓝芯算力 LX500 已随联想问天 WR5219 G5 在联想联宝工厂（合肥）正式下线，官方与媒体将其定性为“全球首款量产 RISC-V+AI 服务器”“RISC-V 服务器在中国真正迈入量产阶段”。<span class="tag">[cite:24]</span><span class="tag">[cite:25]</span></p>
+<table>
+  <thead><tr><th>厂商/产品</th><th>量产状态（截至 2026-10）</th><th>落地整机/客户</th></tr></thead>
+  <tbody>
+    <tr><td class="hl">蓝芯算力 LX500</td><td><span class="tag t-ok">已量产</span></td><td>联想问天 WR5219 G5（2026-07 下线）；中国移动移动云、世纪互联</td></tr>
+    <tr><td class="hl">进迭时空 V100</td><td><span class="tag t-mid">工程落地/整机已现，规模量产待启动</span></td><td>2U 整机（峰会/论坛展出）；今日峰会正式发布</td></tr>
+    <tr><td class="hl">SiFive P870-D</td><td><span class="tag t-mid">商用开发平台</span></td><td>BigSky SF-2U870 2U 开发系统（非量产整机）</td></tr>
+    <tr><td class="hl">达摩院 C930 / Ventana / Ascalon</td><td><span class="tag t-mid">IP 交付/授权</span></td><td>由 SoC 客户集成后落地</td></tr>
+    <tr><td class="hl">睿芯 高光 D35</td><td><span class="tag t-ok">已量产（2025-09 宣布）</span></td><td>RISC-V 数据流“物理 AI”芯片（偏边缘 AI，非通用服务器 CPU）</td></tr>
+  </tbody>
+</table>
+<p class="small">数据来源：<span class="tag">[cite:24]</span><span class="tag">[cite:25]</span><span class="tag">[cite:26]</span><span class="tag">[cite:27]</span><span class="tag">[cite:15]</span><span class="tag">[cite:18]</span>。</p>
+
+<h3>2.3 V100 相对蓝芯 LX500 的优势与短板（同源核，比的是 SoC 与生态）</h3>
+<p>V100 与 LX500 都基于“香山·昆明湖”，因此单核性能基线接近，差异集中在 SoC 整合、AI 路线、通用算力规模与落地节奏：</p>
+<table>
+  <thead><tr><th>对比项</th><th>V100（进迭时空）</th><th>LX500（蓝芯算力）</th><th>谁占优</th></tr></thead>
+  <tbody>
+    <tr><td class="hl">单核通用性能</td><td>≈16.5 分/GHz（SPEC2006，昆明湖）</td><td>同源核心，未公布独立 SPEC</td><td>基本持平（同核）</td></tr>
+    <tr><td class="hl">核数与通用算力密度</td><td>媒体口径 64 核（纯大核路线，通用算力密度更高）</td><td>48 核异构（32 P + 16 E，能效导向）</td><td><b>V100</b>（若 64 核属实）</td></tr>
+    <tr><td class="hl">AI 算力</td><td>媒体口径 ≈32 TOPS INT8</td><td><b>INT8 峰值 75 TOPS</b>，片上 AI 模块</td><td><b>LX500</b></td></tr>
+    <tr><td class="hl">平台 I/O</td><td>支持完整虚拟化（Hypervisor 1.0/AIA/IOMMU）</td><td>PCIe 5.0 / DDR5 / <b>CXL 2.0</b></td><td>互有亮点</td></tr>
+    <tr><td class="hl">量产与交付</td><td>整机已现，规模量产待启动</td><td><b>已量产下线</b>（联想整机）</td><td><b>LX500</b></td></tr>
+    <tr><td class="hl">客户与生态</td><td>香山开源生态 + 端侧 K1/K3 软件栈 + Ubuntu 26.04 原生适配经验</td><td>联想（投资+整机）、中国移动（移动云+BC-LINUX）、世纪互联</td><td>各有所长</td></tr>
+    <tr><td class="hl">IP 自主度</td><td>自研 X60/X100/X200 核 + T100 IOMMU/AIA/IOPMP + N200 互联，全栈 IP</td><td>基于香山昆明湖 V2 定制 + 自研 AI 模块</td><td>各有侧重</td></tr>
+  </tbody>
+</table>
+<p class="small">口径说明：V100 的“64 核 / 32 TOPS”来自第三方媒体，尚未获官方规格确认；LX500 参数来自厂商与官方媒体。</p>
+
+<h3>2.4 那么 V100 到底强在哪？——四条可辩护的优势</h3>
+<ol>
+  <li><b>“端—云”全栈打通的能力，是蓝芯目前不具备的。</b>进迭时空已有 K1/K3 端侧芯片 + 完整 SDK + 全球首个原生适配 Ubuntu 26.04 LTS 的 RISC-V 平台经验，V100 可复用同一软件栈与生态资产，做“同构端云一体”。<span class="tag">[cite:8]</span><span class="tag">[cite:28]</span></li>
+  <li><b>自研 IP 覆盖面更广，定制与供货更可控。</b>从 CPU 核（X60/X100/X200）、虚拟化 IP（IOMMU/AIA/IOPMP）到互联总线 N200 均为自研，对信创客户的“可定制 + 供应链自主”叙事更完整。<span class="tag">[cite:9]</span><span class="tag">[cite:29]</span></li>
+  <li><b>偏“通用服务器 CPU”定位，通用算力密度上限更高。</b>若 64 核属实的纯大核方案，其对外提供的通用 vCPU 供给可能优于 48 核异构的 LX500；对以数据库/虚拟化为主、AI 为辅的负载更友好。</li>
+  <li><b>香山开源根社区的“正统性”与品牌外溢。</b>香山系（含蓝芯、奕斯伟等）共享同一开源底座，V100 作为峰会主论坛发布产品，获得的生态曝光与联盟资源更集中。<span class="tag">[cite:7]</span></li>
+</ol>
+<div class="note"><b>必须承认的短板：</b>在“量产进度”“AI 算力（75 vs ~32 TOPS）”“头部客户绑定（联想/中国移动）”这三项上，<b>蓝芯 LX500 当前领先 V100</b>。因此“V100 的优势”不是全面领先，而是“通用算力密度 + 端云全栈 + 自研 IP 广度”这几个维度。</div>
 
 <h2>3. 跨架构对比：RISC-V vs ARM vs x86</h2>
 <p>把 V100 放进更大的服务器 CPU 版图，与两条成熟架构的主力对比。</p>
@@ -342,7 +389,13 @@
   <li>[cite:20] 鲲鹏 920 处理器规格（鲲鹏社区）— <a href="https://www.hikunpeng.com/compute/kunpeng920">hikunpeng.com</a></li>
   <li>[cite:21] Intel 至强 6 处理器家族（Granite Rapids，8–86 P 核，DDR5-6400/MRDIMM）— <a href="https://www.intel.cn/content/www/cn/zh/artificial-intelligence/new-xeon-6-products-cure-choice-difficulties.html">intel.cn</a></li>
   <li>[cite:22] AMD Advancing AI 2026（EPYC Venice，Zen 6）— <a href="https://www.amd.com/content/dam/amd/en/documents/corporate/events/advancing-ai-2026-distribution-deck.pdf">amd.com</a></li>
-  <li>[cite:23] AMD | Intel 服务器芯片 2026 综述（36 氪）— <a href="https://m.36kr.com/p/3908771208778885">36kr.com</a></li>
+  <li>[cite:23] AMD | Intel 服务器芯片 2026 综述（36 氪）— <a href="https://m.36kr.com/p/3908771208878885">36kr.com</a></li>
+  <li>[cite:24] 搭载深企蓝芯智通融合 CPU，联想推出全球首款开源架构 AI 服务器（光明网，2026-07）— <a href="http://difang.gmw.cn/gd/2026-07/20/content_38896536.htm">gmw.cn</a></li>
+  <li>[cite:25] 688689 … RISC-V 重磅峰会将举办（证券时报，LX500 随联想问天 WR5219 G5 合肥下线）— <a href="http://m.toutiao.com/group/7697501508866277922/">toutiao.com</a></li>
+  <li>[cite:26] 联想问天全球首款 RISC-V 服务器亮相 WAIC（IT 之家）— <a href="https://www.ithome.com/0/979/090.htm">ithome.com</a></li>
+  <li>[cite:27] 蓝芯算力联合中国移动云能力中心 RISC-V + BC-LINUX 全栈方案（LX500 规格）— <a href="https://www.lanxincomputing.com/news-detail.html?id=103">lanxincomputing.com</a>；全球首款 RISC-V+AI 智通融合服务器 CPU（中国日报网）— <a href="http://caijing.chinadaily.com.cn/a/202605/11/WS6a0173b9a310942cc49ab9c0.html">chinadaily.com.cn</a></li>
+  <li>[cite:28] 进迭时空 K3 成为全球首个原生适配 Ubuntu 26.04 LTS 的 RISC-V 平台（SpacemiT 新闻）— <a href="https://www.spacemit.com/news/">spacemit.com</a></li>
+  <li>[cite:29] 进迭时空新一代一致性互联总线 N200 研发完成（SpacemiT 新闻）— <a href="https://www.spacemit.com/news/">spacemit.com</a>；睿芯高光 D35 RISC-V 数据流 AI 芯片量产（上海证券报）— <a href="https://www.cnstock.com/commonDetail/795745">cnstock.com</a></li>
 </ol>
 
 </div>
